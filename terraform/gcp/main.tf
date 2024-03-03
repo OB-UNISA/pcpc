@@ -110,7 +110,7 @@ resource "google_compute_instance" "vm_instance" {
 
   metadata = {
     ssh-keys  = "${var.ssh-user}:${chomp(tls_private_key.ssh.public_key_openssh)}"
-    user-data = "${data.cloudinit_config.conf.rendered}"
+    user-data = data.cloudinit_config.conf.rendered
   }
 }
 
