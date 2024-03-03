@@ -12,11 +12,6 @@ variable "region" {
   default = "europe-west3"
 }
 
-variable "myip" {
-  type      = string
-  sensitive = true
-}
-
 variable "ssh-user" {
-  default = "google-ssh"
+  default = "pcpc-ssh"
 }

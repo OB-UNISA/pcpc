@@ -22,9 +22,10 @@ provider "google" {
 
 provider "tls" {}
 
-# Network
+############### Network ####################à
+# VPC Network
 resource "google_compute_network" "vpc_network" {
-  name = "terraform-network"
+  name = "pcpc-network"
 }
 
 # Firewall SSH
@@ -37,8 +38,7 @@ resource "google_compute_firewall" "ssh" {
   direction     = "INGRESS"
   network       = google_compute_network.vpc_network.id
   priority      = 1000
-  source_ranges = ["${var.myip}/32"]
-  target_tags   = ["ssh"]
+  source_ranges = ["0.0.0.0/0"]
 }
 
 # Firewall internal. Allow VMs to communicate between them in the LAN
@@ -62,6 +62,7 @@ resource "google_compute_firewall" "internal" {
   source_ranges = ["10.128.0.0/9"]
 }
 
+######################## SSH Keys ##########################
 # ssh key
 resource "tls_private_key" "ssh" {
   algorithm = "RSA"
@@ -75,12 +76,12 @@ resource "local_file" "private_key" {
   file_permission = "0600"
 }
 
+############### Compute Engine ####################ààà
 # Compute Instances
 resource "google_compute_instance" "vm_instance" {
-  count        = 1
-  name         = "terraform-instance-${count.index}"
+  count        = 2
+  name         = "pcpc-instance-${count.index}"
   machine_type = "e2-micro"
-  tags         = ["ssh"]
 
   metadata_startup_script = "sudo apt-get update;"
 
@@ -93,6 +94,7 @@ resource "google_compute_instance" "vm_instance" {
   network_interface {
     network = google_compute_network.vpc_network.name
     access_config {
+      // even if it is empty, it is needed to assign a public ip to the VM
     }
   }
 
