@@ -22,7 +22,7 @@ provider "google" {
 
 provider "tls" {}
 
-############### Network ####################à
+############### Network ####################
 # VPC Network
 resource "google_compute_network" "vpc_network" {
   name = "pcpc-network"
@@ -76,14 +76,24 @@ resource "local_file" "private_key" {
   file_permission = "0600"
 }
 
-############### Compute Engine ####################ààà
+############### Compute Engine ####################
+# cloud-init. Run "cloud-init status" in the SSH to check when it is done
+data "cloudinit_config" "conf" {
+  gzip          = false
+  base64_encode = false
+
+  part {
+    content_type = "text/cloud-config"
+    content      = file("../cloud-init.yaml")
+    filename     = "conf.yaml"
+  }
+}
+
 # Compute Instances
 resource "google_compute_instance" "vm_instance" {
   count        = 2
   name         = "pcpc-instance-${count.index}"
   machine_type = "e2-micro"
-
-  metadata_startup_script = "sudo apt-get update;"
 
   boot_disk {
     initialize_params {
@@ -99,7 +109,8 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   metadata = {
-    ssh-keys = "${var.ssh-user}:${chomp(tls_private_key.ssh.public_key_openssh)}"
+    ssh-keys  = "${var.ssh-user}:${chomp(tls_private_key.ssh.public_key_openssh)}"
+    user-data = "${data.cloudinit_config.conf.rendered}"
   }
 }
 
