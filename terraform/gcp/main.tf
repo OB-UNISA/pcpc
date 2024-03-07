@@ -20,16 +20,16 @@ provider "google" {
   zone    = "${var.region}-a"
 }
 
-provider "tls" {}
-
 ############### Network ####################
 # VPC Network
 resource "google_compute_network" "vpc_network" {
-  name = "pcpc-network"
+  name = "${var.name}-network"
 }
 
 # Firewall SSH
 resource "google_compute_firewall" "ssh" {
+  count = var.firewall-ssh ? 1 : 0
+
   name = "allow-ssh"
   allow {
     ports    = ["22"]
@@ -43,6 +43,8 @@ resource "google_compute_firewall" "ssh" {
 
 # Firewall internal. Allow VMs to communicate between them in the LAN
 resource "google_compute_firewall" "internal" {
+  count = var.firewall-internal ? 1 : 0
+
   name = "allow-internal"
   allow {
     ports    = ["0-65535"]
@@ -62,6 +64,27 @@ resource "google_compute_firewall" "internal" {
   source_ranges = ["10.128.0.0/9"]
 }
 
+# Firewall external
+resource "google_compute_firewall" "external" {
+  count = length(var.firewall-external) == 0 ? 0 : 1
+
+  name = "allow-external"
+
+  dynamic "allow" {
+    for_each = var.firewall-external
+
+    content {
+      ports    = allow.value.ports
+      protocol = allow.value.protocol
+    }
+  }
+
+  direction     = "INGRESS"
+  network       = google_compute_network.vpc_network.id
+  priority      = 1000
+  source_ranges = ["0.0.0.0/0"]
+}
+
 ######################## SSH Keys ##########################
 # ssh key
 resource "tls_private_key" "ssh" {
@@ -72,7 +95,7 @@ resource "tls_private_key" "ssh" {
 # save ssh private key
 resource "local_file" "private_key" {
   content         = tls_private_key.ssh.private_key_pem
-  filename        = "gcp.pem"
+  filename        = var.ssh-pk-save-path
   file_permission = "0600"
 }
 
@@ -84,27 +107,36 @@ data "cloudinit_config" "conf" {
 
   part {
     content_type = "text/cloud-config"
-    content      = file("../cloud-init.yaml")
+    content      = file(var.cloud-init-file)
     filename     = "conf.yaml"
   }
 }
 
 # Compute Instances
 resource "google_compute_instance" "vm_instance" {
-  count        = 2
-  name         = "pcpc-instance-${count.index}"
-  machine_type = "e2-micro"
+  count = var.machines-count
+
+  name         = "${var.name}-instance-${count.index}"
+  machine_type = var.machine-type
+
+  scheduling {
+    preemptible                 = var.spot-instance
+    automatic_restart           = !var.spot-instance
+    provisioning_model          = var.spot-instance ? "SPOT" : "STANDARD"
+    instance_termination_action = var.spot-instance ? "STOP" : null
+  }
+
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      image = var.os-image
     }
   }
 
   network_interface {
     network = google_compute_network.vpc_network.name
     access_config {
-      // even if it is empty, it is needed to assign a public ip to the VM
+      network_tier = "STANDARD"
     }
   }
 
