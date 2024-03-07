@@ -100,7 +100,9 @@ resource "local_file" "private_key" {
 }
 
 ############### Compute Engine ####################
-# cloud-init. Run "cloud-init status" in the SSH to check when it is done
+# cloud-init
+# run "cloud-init status --wait" in the SSH to check when it is done
+# run "tail -f /var/log/cloud-init" to see what it is doing
 data "cloudinit_config" "conf" {
   gzip          = false
   base64_encode = false
