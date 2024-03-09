@@ -1,0 +1,25 @@
+---
+- name: "Run server {{ apache }}"
+  vars:
+    server: "{{ apache }}"
+  hosts: all
+
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+
+  pre_tasks:
+    - name: Load variables file
+      ansible.builtin.include_vars: "{{ item }}"
+      with_first_found:
+        - "vars/servers-{{ ansible_os_family }}.yml"
+        - vars/servers-default.yml
+
+    - name: Apt update cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 86400 # 24h
+
+  tasks:
+    - name: Import server setup tasks
+      ansible.builtin.import_tasks: tasks/server-setup.yml

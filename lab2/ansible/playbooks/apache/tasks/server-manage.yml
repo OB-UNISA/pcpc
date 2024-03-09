@@ -1,0 +1,28 @@
+- name: Ensure is started {{ server }}
+  ansible.builtin.service:
+    name: "{{ server }}"
+    state: started
+    enabled: false
+
+- name: Create server file
+  ansible.builtin.copy:
+    dest: "{{ root_dir }}/server.html"
+    content: "{{ server }}"
+    mode: "0777"
+
+- name: Create index file
+  ansible.builtin.copy:
+    dest: "{{ root_dir }}/index.html"
+    content: "{{ ansible_facts['hostname']}}"
+    mode: "0777"
+
+# this is used as a second check to be sure that the selected server is running
+- name: Check web server can serve content
+  ansible.builtin.uri:
+    url: http://localhost/server.html
+    method: GET
+    return_content: true
+    status_code: 200
+  register: result
+  until: result.content == server
+  retries: 2

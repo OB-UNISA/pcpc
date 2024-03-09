@@ -1,0 +1,7 @@
+- name: Install {{ server }}
+  ansible.builtin.apt:
+    name: "{{ server }}"
+    state: present
+
+- name: Import Server Manage
+  ansible.builtin.import_tasks: tasks/server-manage.yml
