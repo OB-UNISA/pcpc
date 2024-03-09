@@ -118,7 +118,7 @@ data "cloudinit_config" "conf" {
 resource "google_compute_instance" "vm_instance" {
   count = var.machines-count
 
-  name         = "${var.name}-instance-${count.index}"
+  name         = "${var.name}-${count.index}"
   machine_type = var.machine-type
 
   scheduling {
