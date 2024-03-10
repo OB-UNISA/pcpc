@@ -1,0 +1,55 @@
+- name: "Install {{ implementation }}"
+  hosts: all
+
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+
+  pre_tasks:
+    - name: Load variables file
+      ansible.builtin.include_vars: '{{ item }}'
+      with_first_found:
+        - 'vars/servers-{{ ansible_os_family }}.yml'
+        - vars/servers-default.yml
+
+    - name: Apt update cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 86400 # 24h
+
+  tasks:
+    - name: Installation
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - build-essential
+        - openmpi-bin
+        - openmpi-common
+        - openmpi-doc
+        - libopenmpi-dev
+        - gcc
+        - htop
+
+    - name: Copy MPI example
+      ansible.builtin.copy:
+        src: './hello-mpi.c'
+        dest: '/home/{{ user }}/hello-mpi.c'
+        owner: '{{ user }}'
+        group: '{{ user }}'
+        mode: '0777'
+
+    - name: Compile MPI example
+      become_user: "{{ user }}"
+      ansible.builtin.command:
+        cmd: 'mpicc "/home/{{ user }}/hello-mpi.c" -o "/home/{{ user }}/hello"'
+
+    - name: Run MPI example
+      become_user: "{{ user }}"
+      ansible.builtin.command:
+        cmd: 'mpirun "/home/{{ user }}/hello"'
+      register: mpi_output
+
+    - name: Print output
+      ansible.builtin.debug:
+        var: mpi_output.stdout

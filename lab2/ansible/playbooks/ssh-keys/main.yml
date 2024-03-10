@@ -37,5 +37,3 @@
 
     - name: Setup ssh-keys
       ansible.builtin.import_tasks: tasks/ssh-keys.yml
-
-
