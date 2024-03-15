@@ -5,6 +5,7 @@ module "compute-instance" {
   project-id  = var.project-id
 
   name             = "pcpc-lab2"
+  machine-type     = "e2-medium"
   ssh-user         = "root"
   ssh-pk-save-path = var.ssh-pk-save-path
   machines-count   = 2
