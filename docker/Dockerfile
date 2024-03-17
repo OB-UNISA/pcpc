@@ -17,7 +17,7 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm/v6" ]; then \
 # These options are passed to the steps below
 ARG OPENMPI_VERSION="5.0.2"
 ARG OPENMPI_MAJOR_VERSION="v5.0"
-ARG OPENMPI_CONFIGURE_OPTIONS
+ARG OPENMPI_CONFIGURE_OPTIONS="--prefix=/usr/local"
 ARG OPENMPI_MAKE_OPTIONS="-j4"
 
 # Download, build, and install OPENMPI
