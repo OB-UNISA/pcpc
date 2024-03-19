@@ -42,3 +42,6 @@ terraform.rc
 
 # Ignore any json
 **/*.json
+
+# Ignore a.out
+**/a.out
