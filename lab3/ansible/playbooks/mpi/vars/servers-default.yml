@@ -1,0 +1,7 @@
+implementation: OpenMpi
+user: pcpc
+
+examples:
+  - "hello-mpi.c"
+  - "hello_world_mpi_2.c"
+  - "hello_world_mpi_3.c"

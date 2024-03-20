@@ -1,0 +1,61 @@
+- name: "Install {{ implementation }}"
+  hosts: all
+
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+
+  pre_tasks:
+    - name: Load variables file
+      ansible.builtin.include_vars: '{{ item }}'
+      with_first_found:
+        - 'vars/servers-{{ ansible_os_family }}.yml'
+        - vars/servers-default.yml
+
+    - name: Apt update cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 86400 # 24h
+
+  tasks:
+    - name: Installation
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - build-essential
+        - openmpi-bin
+        - openmpi-common
+        - openmpi-doc
+        - libopenmpi-dev
+        - gcc
+        - htop
+
+    - name: Copy MPI examples
+      ansible.builtin.copy:
+        src: "../../../../hello-mpi/{{ item }}"
+        dest: '/home/{{ user }}/{{ item }}'
+        owner: '{{ user }}'
+        group: '{{ user }}'
+        mode: '0777'
+      loop: "{{ examples }}"
+
+    - name: Compile MPI examples
+      become_user: "{{ user }}"
+      ansible.builtin.command:
+        cmd: 'mpicc "/home/{{ user }}/{{ item }}" -o "/home/{{ user }}/{{ item }}.out"'
+      loop: "{{ examples }}"
+
+    - name: Run MPI example
+      become_user: "{{ user }}"
+      ansible.builtin.command:
+        cmd: 'mpirun -np 4 --oversubscribe "/home/{{ user }}/{{ item }}.out"'
+      loop: "{{ examples }}"
+      register: mpi_output
+
+    - name: Print output
+      ansible.builtin.debug:
+        msg: "{{ item.stdout }}"
+      loop: "{{ mpi_output.results }}"
+      loop_control:
+        label: "{{ item.item }}"
