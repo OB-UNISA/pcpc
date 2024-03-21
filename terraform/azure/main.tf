@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "3.94.0"
+      version = "3.96.0"
     }
     tls = {
       source  = "hashicorp/tls"
@@ -17,19 +17,16 @@ provider "azurerm" {
   features {}
 }
 
-provider "tls" {}
-
-
 # RG
 resource "azurerm_resource_group" "pcpc" {
-  name     = "pcpc"
+  name     = var.name
   location = var.location
 }
 
 ################ Network #####################################
 # vnet
 resource "azurerm_virtual_network" "vnet" {
-  name                = "pcpc"
+  name                = "${var.name}-network"
   address_space       = ["10.0.0.0/16"]
   location            = var.location
   resource_group_name = azurerm_resource_group.pcpc.name
@@ -45,60 +42,98 @@ resource "azurerm_subnet" "vm" {
 
 # network security group
 resource "azurerm_network_security_group" "nsg" {
-  name                = "nsg"
+  name                = "${var.name}-nsg"
   location            = var.location
   resource_group_name = azurerm_resource_group.pcpc.name
+}
 
-  # SSH
-  security_rule {
-    name                       = "allow-ssh"
-    priority                   = 1000
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
+# NSG SSH
+resource "azurerm_network_security_rule" "ssh" {
+  count = var.firewall-ssh ? 1 : 0
+
+  name                        = "allow-ssh"
+  priority                    = 1000
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.pcpc.name
+  network_security_group_name = azurerm_network_security_group.nsg.name
+}
+
+######## NSG Internal #########
+# TCP
+resource "azurerm_network_security_rule" "internal-tcp" {
+  count = var.firewall-internal ? 1 : 0
+
+  name                         = "allow-internal-tcp"
+  priority                     = 1001
+  direction                    = "Inbound"
+  access                       = "Allow"
+  protocol                     = "Tcp"
+  source_port_range            = "0-65535"
+  destination_port_range       = "0-65535"
+  source_address_prefixes      = azurerm_subnet.vm.address_prefixes
+  destination_address_prefixes = azurerm_subnet.vm.address_prefixes
+  resource_group_name          = azurerm_resource_group.pcpc.name
+  network_security_group_name  = azurerm_network_security_group.nsg.name
+}
+
+# UDP
+resource "azurerm_network_security_rule" "internal-udp" {
+  count = var.firewall-internal ? 1 : 0
+
+  name                         = "allow-internal-udp"
+  priority                     = 1002
+  direction                    = "Inbound"
+  access                       = "Allow"
+  protocol                     = "Udp"
+  source_port_range            = "0-65535"
+  destination_port_range       = "0-65535"
+  source_address_prefixes      = azurerm_subnet.vm.address_prefixes
+  destination_address_prefixes = azurerm_subnet.vm.address_prefixes
+  resource_group_name          = azurerm_resource_group.pcpc.name
+  network_security_group_name  = azurerm_network_security_group.nsg.name
+}
+
+# Icmp
+resource "azurerm_network_security_rule" "internal-icmp" {
+  count = var.firewall-internal ? 1 : 0
+
+  name                         = "allow-internal-icmp"
+  priority                     = 1003
+  direction                    = "Inbound"
+  access                       = "Allow"
+  protocol                     = "Icmp"
+  source_port_range            = "0-65535"
+  destination_port_range       = "0-65535"
+  source_address_prefixes      = azurerm_subnet.vm.address_prefixes
+  destination_address_prefixes = azurerm_subnet.vm.address_prefixes
+  resource_group_name          = azurerm_resource_group.pcpc.name
+  network_security_group_name  = azurerm_network_security_group.nsg.name
+}
+
+# NSG External
+resource "azurerm_network_security_rule" "external" {
+  for_each = {
+    for index, fw in var.firewall-external :
+    index => fw
   }
 
-  ######## Internal #########
-  # TCP
-  security_rule {
-    name                         = "allow-internal-tcp"
-    priority                     = 1001
-    direction                    = "Inbound"
-    access                       = "Allow"
-    protocol                     = "Tcp"
-    source_port_range            = "0-65535"
-    destination_port_range       = "0-65535"
-    source_address_prefixes      = azurerm_subnet.vm.address_prefixes
-    destination_address_prefixes = azurerm_subnet.vm.address_prefixes
-  }
-  # UDP
-  security_rule {
-    name                         = "allow-internal-udp"
-    priority                     = 1002
-    direction                    = "Inbound"
-    access                       = "Allow"
-    protocol                     = "Udp"
-    source_port_range            = "0-65535"
-    destination_port_range       = "0-65535"
-    source_address_prefixes      = azurerm_subnet.vm.address_prefixes
-    destination_address_prefixes = azurerm_subnet.vm.address_prefixes
-  }
-  # Icmp
-  security_rule {
-    name                         = "allow-internal-icmp"
-    priority                     = 1003
-    direction                    = "Inbound"
-    access                       = "Allow"
-    protocol                     = "Icmp"
-    source_port_range            = "*"
-    destination_port_range       = "*"
-    source_address_prefixes      = azurerm_subnet.vm.address_prefixes
-    destination_address_prefixes = azurerm_subnet.vm.address_prefixes
-  }
+  name                        = "allow-external-${join("_", each.value.ports)}"
+  priority                    = 1004 + index(var.firewall-external, each.value)
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = each.value.protocol
+  source_port_range           = "*"
+  destination_port_ranges     = each.value.ports
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.pcpc.name
+  network_security_group_name = azurerm_network_security_group.nsg.name
 }
 
 # Connect the security group to the internal subnet
@@ -117,38 +152,40 @@ resource "tls_private_key" "ssh" {
 # save ssh private key
 resource "local_file" "private_key" {
   content         = tls_private_key.ssh.private_key_pem
-  filename        = "azure.pem"
+  filename        = var.ssh-pk-save-path
   file_permission = "0600"
 }
 
 #################### VM ######################
-# cloud-init. Run "cloud-init status" in the SSH to check when it is done
+# cloud-init
+# run "cloud-init status --wait" in the SSH to check when it is done
+# run "tail -f /var/log/cloud-init-output.log" to see what it is doing
 data "cloudinit_config" "conf" {
   gzip          = true
   base64_encode = true
 
   part {
     content_type = "text/cloud-config"
-    content      = file("../cloud-init.yaml")
+    content      = file(var.cloud-init-file)
     filename     = "conf.yaml"
   }
 }
 
 
 module "vm" {
-  count  = 2
+  count  = var.machines-count
   source = "./modules/vm"
 
-  name                = "pcpc-${count.index}"
+  name                = "${var.name}-${count.index}"
   resource_group_name = azurerm_resource_group.pcpc.name
   location            = var.location
-  size                = "Standard_B1s"
+  size                = var.machine-type
 
   source_image_reference = {
-    publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
-    version   = "latest"
+    publisher = var.os-image.publisher
+    offer     = var.os-image.offer
+    sku       = var.os-image.sku
+    version   = var.os-image.version
   }
 
   ssh-user       = var.ssh-user
