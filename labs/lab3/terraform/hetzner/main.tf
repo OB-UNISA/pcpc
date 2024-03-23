@@ -1,5 +1,5 @@
 module "hetzner-server" {
-  source = "../../../terraform/hetzner"
+  source = "../../../../terraform/hetzner"
 
   hcloud_token     = var.hcloud_token
   name             = "pcpc-lab3"

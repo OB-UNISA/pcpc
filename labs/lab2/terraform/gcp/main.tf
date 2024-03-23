@@ -1,8 +1,11 @@
-module "hetzner-server" {
-  source = "../../../terraform/hetzner"
+module "compute-instance" {
+  source = "../../../../terraform/gcp"
 
-  hcloud_token     = var.hcloud_token
+  credentials = var.credentials
+  project-id  = var.project-id
+
   name             = "pcpc-lab2"
+  ssh-user         = "root"
   ssh-pk-save-path = var.ssh-pk-save-path
   machines-count   = 2
   cloud-init-file  = "cloud-init.yaml"
@@ -11,7 +14,7 @@ module "hetzner-server" {
 
   firewall-external = [
     {
-      port     = "80"
+      ports    = ["80"]
       protocol = "tcp"
     }
   ]
