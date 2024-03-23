@@ -44,7 +44,7 @@ variable "firewall-external" {
 
   default = []
 
-  description = "Add additional ports to be opened on the WLAN"
+  description = "Add additional ports to be opened on the WAN"
 }
 
 variable "ssh-pk-save-path" {
