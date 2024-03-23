@@ -17,12 +17,10 @@ provider "hcloud" {
   token = var.hcloud_token
 }
 
-provider "tls" {}
-
 ############### Network ###############à
 # Private Network
 resource "hcloud_network" "pcpc" {
-  name     = "pcpc"
+  name     = "${var.name}-network"
   ip_range = "10.0.0.0/8"
 }
 
@@ -30,15 +28,16 @@ resource "hcloud_network" "pcpc" {
 resource "hcloud_network_subnet" "vm" {
   network_id   = hcloud_network.pcpc.id
   type         = "cloud"
-  network_zone = "eu-central"
+  network_zone = var.network-zone
   ip_range     = "10.0.2.0/24"
 }
 
-# Firewall
-resource "hcloud_firewall" "pcpc" {
-  name = "pcpc"
+####### Firewall #########
+# SSH
+resource "hcloud_firewall" "ssh" {
+  count = var.firewall-ssh ? 1 : 0
 
-  # SSH
+  name = "allow-ssh"
   rule {
     direction = "in"
     protocol  = "tcp"
@@ -48,7 +47,13 @@ resource "hcloud_firewall" "pcpc" {
       "::/0"
     ]
   }
+}
 
+# Internal
+resource "hcloud_firewall" "internal" {
+  count = var.firewall-internal ? 1 : 0
+
+  name = "allow-internal"
   # Internal TCP
   rule {
     direction  = "in"
@@ -71,7 +76,27 @@ resource "hcloud_firewall" "pcpc" {
     protocol   = "icmp"
     source_ips = [hcloud_network_subnet.vm.ip_range]
   }
+}
 
+# External
+resource "hcloud_firewall" "external" {
+  count = length(var.firewall-external) == 0 ? 0 : 1
+
+  name = "allow-external"
+
+  dynamic "rule" {
+    for_each = var.firewall-external
+
+    content {
+      direction = "in"
+      port      = rule.value.port
+      protocol  = rule.value.protocol
+      source_ips = [
+        "0.0.0.0/0",
+        "::/0"
+      ]
+    }
+  }
 }
 
 ################# SSH Keys #######################
@@ -84,7 +109,7 @@ resource "tls_private_key" "ssh" {
 # save ssh private key
 resource "local_file" "private_key" {
   content         = tls_private_key.ssh.private_key_pem
-  filename        = "hetzner.pem"
+  filename        = var.ssh-pk-save-path
   file_permission = "0600"
 }
 
@@ -95,24 +120,27 @@ resource "hcloud_ssh_key" "default" {
 }
 
 ########## VM ####################
-# cloud-init. Run "cloud-init status" in the SSH to check when it is done
+# cloud-init
+# run "cloud-init status --wait" in the SSH to check when it is done
+# run "tail -f /var/log/cloud-init-output.log" to see what it is doing
 data "cloudinit_config" "conf" {
   gzip          = false
   base64_encode = false
 
   part {
     content_type = "text/cloud-config"
-    content      = file("../cloud-init.yaml")
+    content      = file(var.cloud-init-file)
     filename     = "conf.yaml"
   }
 }
 
 # VM
 resource "hcloud_server" "vm" {
-  count       = 2
-  name        = "pcpc-${count.index}"
-  server_type = "cx11"
-  image       = "ubuntu-22.04"
+  count = var.machines-count
+
+  name        = "${var.name}-${count.index}"
+  server_type = var.machine-type
+  image       = var.os-image
   location    = var.location
 
   public_net {
@@ -123,10 +151,8 @@ resource "hcloud_server" "vm" {
   network {
     network_id = hcloud_network.pcpc.id
   }
-
-  firewall_ids = [hcloud_firewall.pcpc.id]
-  ssh_keys     = [hcloud_ssh_key.default.id]
-  user_data    = data.cloudinit_config.conf.rendered
+  ssh_keys  = [hcloud_ssh_key.default.id]
+  user_data = data.cloudinit_config.conf.rendered
 
   lifecycle {
     ignore_changes = [network]
@@ -139,4 +165,26 @@ resource "hcloud_server" "vm" {
   depends_on = [
     hcloud_network_subnet.vm,
   ]
+}
+
+# Firewall attach to servers
+resource "hcloud_firewall_attachment" "fw_att_ssh" {
+  count = var.firewall-ssh ? 1 : 0
+
+  firewall_id = hcloud_firewall.ssh[0].id
+  server_ids  = hcloud_server.vm[*].id
+}
+
+resource "hcloud_firewall_attachment" "fw_att_internal" {
+  count = var.firewall-internal ? 1 : 0
+
+  firewall_id = hcloud_firewall.internal[0].id
+  server_ids  = hcloud_server.vm[*].id
+}
+
+resource "hcloud_firewall_attachment" "fw_att_external" {
+  count = length(var.firewall-external) == 0 ? 0 : 1
+
+  firewall_id = hcloud_firewall.external[0].id
+  server_ids  = hcloud_server.vm[*].id
 }
