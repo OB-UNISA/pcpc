@@ -44,12 +44,23 @@
       ansible.builtin.command:
         cmd: 'mpicc "/home/{{ user }}/hello-mpi.c" -o "/home/{{ user }}/hello"'
 
-    - name: Run MPI example
+    - name: Copy host file on master
+      ansible.builtin.copy:
+        src: './hfile'
+        dest: '/home/{{ user }}/hfile'
+        owner: '{{ user }}'
+        group: '{{ user }}'
+        mode: '0777'
+      run_once: true
+
+    - name: Run MPI example on master
       become_user: "{{ user }}"
       ansible.builtin.command:
-        cmd: 'mpirun "/home/{{ user }}/hello"'
+        cmd: 'mpirun -np 4 --oversubscribe --hostfile "/home/{{ user }}/hfile" "/home/{{ user }}/hello"'
       register: mpi_output
+      run_once: true
 
     - name: Print output
       ansible.builtin.debug:
-        var: mpi_output.stdout
+        msg: "{{ mpi_output.stdout_lines }}"
+      run_once: true
