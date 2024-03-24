@@ -45,17 +45,28 @@
       ansible.builtin.command:
         cmd: 'mpicc "/home/{{ user }}/{{ item }}" -o "/home/{{ user }}/{{ item }}.out"'
       loop: "{{ examples }}"
+      
+    - name: Copy host file on master
+      ansible.builtin.copy:
+        src: './hfile'
+        dest: '/home/{{ user }}/hfile'
+        owner: '{{ user }}'
+        group: '{{ user }}'
+        mode: '0777'
+      run_once: true
 
-    - name: Run MPI example
+    - name: Run MPI examples on master
       become_user: "{{ user }}"
       ansible.builtin.command:
-        cmd: 'mpirun -np 4 --oversubscribe "/home/{{ user }}/{{ item }}.out"'
+        cmd: 'mpirun -np 4 --oversubscribe --hostfile "/home/{{ user }}/hfile" "/home/{{ user }}/{{ item }}.out"'
       loop: "{{ examples }}"
       register: mpi_output
+      run_once: true
 
     - name: Print output
       ansible.builtin.debug:
-        msg: "{{ item.stdout }}"
+        msg: "{{ item.stdout_lines }}"
       loop: "{{ mpi_output.results }}"
       loop_control:
         label: "{{ item.item }}"
+      run_once: true
