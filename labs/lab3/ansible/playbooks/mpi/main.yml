@@ -45,7 +45,7 @@
       ansible.builtin.command:
         cmd: 'mpicc "/home/{{ user }}/{{ item }}" -o "/home/{{ user }}/{{ item }}.out"'
       loop: "{{ examples }}"
-      
+
     - name: Copy host file on master
       ansible.builtin.copy:
         src: './hfile'
