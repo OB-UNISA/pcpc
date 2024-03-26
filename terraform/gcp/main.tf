@@ -23,7 +23,15 @@ provider "google" {
 ############### Network ####################
 # VPC Network
 resource "google_compute_network" "vpc_network" {
-  name = "${var.name}-network"
+  name                    = "${var.name}-network"
+  auto_create_subnetworks = false
+}
+
+# Subnet
+resource "google_compute_subnetwork" "vm" {
+  name          = "vm"
+  ip_cidr_range = "10.0.2.0/24"
+  network       = google_compute_network.vpc_network.id
 }
 
 # Firewall SSH
@@ -61,7 +69,7 @@ resource "google_compute_firewall" "internal" {
   direction     = "INGRESS"
   network       = google_compute_network.vpc_network.id
   priority      = 1000
-  source_ranges = ["10.128.0.0/9"]
+  source_ranges = [google_compute_subnetwork.vm.ip_cidr_range]
 }
 
 # Firewall external
@@ -137,6 +145,7 @@ resource "google_compute_instance" "vm_instance" {
 
   network_interface {
     network = google_compute_network.vpc_network.name
+    subnetwork = google_compute_subnetwork.vm.self_link
     access_config {
       network_tier = "STANDARD"
     }
