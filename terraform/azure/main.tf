@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "3.96.0"
+      version = "3.97.1"
     }
     tls = {
       source  = "hashicorp/tls"
@@ -10,7 +10,7 @@ terraform {
     }
   }
 
-  required_version = ">= 1.7.3"
+  required_version = ">= 1.7.5"
 }
 
 provider "azurerm" {
@@ -64,50 +64,17 @@ resource "azurerm_network_security_rule" "ssh" {
   network_security_group_name = azurerm_network_security_group.nsg.name
 }
 
-######## NSG Internal #########
-# TCP
-resource "azurerm_network_security_rule" "internal-tcp" {
-  count = var.firewall-internal ? 1 : 0
+# NSG Internal
+resource "azurerm_network_security_rule" "internal" {
+  for_each = var.firewall-internal ? {
+    for index, protocol in ["Tcp", "Udp", "Icmp"] : index => protocol
+  } : {}
 
-  name                         = "allow-internal-tcp"
-  priority                     = 1001
+  name                         = "allow-internal-${each.value}"
+  priority                     = 1001 + each.key
   direction                    = "Inbound"
   access                       = "Allow"
-  protocol                     = "Tcp"
-  source_port_range            = "0-65535"
-  destination_port_range       = "0-65535"
-  source_address_prefixes      = azurerm_subnet.vm.address_prefixes
-  destination_address_prefixes = azurerm_subnet.vm.address_prefixes
-  resource_group_name          = azurerm_resource_group.pcpc.name
-  network_security_group_name  = azurerm_network_security_group.nsg.name
-}
-
-# UDP
-resource "azurerm_network_security_rule" "internal-udp" {
-  count = var.firewall-internal ? 1 : 0
-
-  name                         = "allow-internal-udp"
-  priority                     = 1002
-  direction                    = "Inbound"
-  access                       = "Allow"
-  protocol                     = "Udp"
-  source_port_range            = "0-65535"
-  destination_port_range       = "0-65535"
-  source_address_prefixes      = azurerm_subnet.vm.address_prefixes
-  destination_address_prefixes = azurerm_subnet.vm.address_prefixes
-  resource_group_name          = azurerm_resource_group.pcpc.name
-  network_security_group_name  = azurerm_network_security_group.nsg.name
-}
-
-# Icmp
-resource "azurerm_network_security_rule" "internal-icmp" {
-  count = var.firewall-internal ? 1 : 0
-
-  name                         = "allow-internal-icmp"
-  priority                     = 1003
-  direction                    = "Inbound"
-  access                       = "Allow"
-  protocol                     = "Icmp"
+  protocol                     = each.value
   source_port_range            = "0-65535"
   destination_port_range       = "0-65535"
   source_address_prefixes      = azurerm_subnet.vm.address_prefixes
@@ -117,14 +84,17 @@ resource "azurerm_network_security_rule" "internal-icmp" {
 }
 
 # NSG External
+locals {
+  next_priority = var.firewall-internal ? 1001 + length(azurerm_network_security_rule.internal) : 1001
+}
+
 resource "azurerm_network_security_rule" "external" {
   for_each = {
-    for index, fw in var.firewall-external :
-    index => fw
+    for index, rule in var.firewall-external : index => rule
   }
 
   name                        = "allow-external-${join("_", each.value.ports)}"
-  priority                    = 1004 + index(var.firewall-external, each.value)
+  priority                    = local.next_priority + each.key
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = each.value.protocol
@@ -170,7 +140,6 @@ data "cloudinit_config" "conf" {
     filename     = "conf.yaml"
   }
 }
-
 
 module "vm" {
   count  = var.machines-count

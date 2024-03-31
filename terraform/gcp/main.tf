@@ -2,14 +2,14 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "5.18.0"
+      version = "5.22.0"
     }
     tls = {
       source  = "hashicorp/tls"
       version = "4.0.5"
     }
   }
-  required_version = ">= 1.7.3"
+  required_version = ">= 1.7.5"
 }
 
 provider "google" {
@@ -54,16 +54,14 @@ resource "google_compute_firewall" "internal" {
   count = var.firewall-internal ? 1 : 0
 
   name = "allow-internal"
-  allow {
-    ports    = ["0-65535"]
-    protocol = "tcp"
-  }
-  allow {
-    ports    = ["0-65535"]
-    protocol = "udp"
-  }
-  allow {
-    protocol = "icmp"
+
+  dynamic "allow" {
+    for_each = ["tcp", "udp", "icmp"]
+
+    content {
+      protocol = allow.value
+      ports    = allow.value != "icmp" ? ["0-65535"] : null
+    }
   }
 
   direction     = "INGRESS"
@@ -136,7 +134,6 @@ resource "google_compute_instance" "vm_instance" {
     instance_termination_action = var.spot-instance ? "STOP" : null
   }
 
-
   boot_disk {
     initialize_params {
       image = var.os-image
@@ -144,7 +141,7 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   network_interface {
-    network = google_compute_network.vpc_network.name
+    network    = google_compute_network.vpc_network.name
     subnetwork = google_compute_subnetwork.vm.self_link
     access_config {
       network_tier = "STANDARD"

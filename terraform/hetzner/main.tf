@@ -10,7 +10,7 @@ terraform {
     }
   }
 
-  required_version = ">= 1.7.3"
+  required_version = ">= 1.7.5"
 }
 
 provider "hcloud" {
@@ -21,7 +21,7 @@ provider "hcloud" {
 # Private Network
 resource "hcloud_network" "pcpc" {
   name     = "${var.name}-network"
-  ip_range = "10.0.0.0/8"
+  ip_range = "10.0.0.0/16"
 }
 
 # subnet
@@ -54,27 +54,16 @@ resource "hcloud_firewall" "internal" {
   count = var.firewall-internal ? 1 : 0
 
   name = "allow-internal"
-  # Internal TCP
-  rule {
-    direction  = "in"
-    protocol   = "tcp"
-    source_ips = [hcloud_network_subnet.vm.ip_range]
-    port       = "any"
-  }
 
-  # Internal UDP
-  rule {
-    direction  = "in"
-    protocol   = "udp"
-    source_ips = [hcloud_network_subnet.vm.ip_range]
-    port       = "any"
-  }
+  dynamic "rule" {
+    for_each = ["tcp", "udp", "icmp"]
 
-  # Internal ICMP
-  rule {
-    direction  = "in"
-    protocol   = "icmp"
-    source_ips = [hcloud_network_subnet.vm.ip_range]
+    content {
+      direction  = "in"
+      protocol   = rule.value
+      source_ips = [hcloud_network_subnet.vm.ip_range]
+      port       = rule.value != "icmp" ? "any" : null
+    }
   }
 }
 
