@@ -1,4 +1,4 @@
-- name: "Install {{ implementation }}"
+- name: "Lab2"
   hosts: all
 
   become: true
@@ -12,25 +12,7 @@
         - 'vars/servers-{{ ansible_os_family }}.yml'
         - vars/servers-default.yml
 
-    - name: Apt update cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 86400 # 24h
-
   tasks:
-    - name: Installation
-      ansible.builtin.apt:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - build-essential
-        - openmpi-bin
-        - openmpi-common
-        - openmpi-doc
-        - libopenmpi-dev
-        - gcc
-        - htop
-
     - name: Copy MPI example
       ansible.builtin.copy:
         src: './hello-mpi.c'

@@ -12,6 +12,11 @@
         - 'vars/servers-{{ ansible_os_family }}.yml'
         - vars/servers-default.yml
 
+    - name: Apt update cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 86400 # 24h
+
   tasks:
     - name: 'Generate keys'
       community.crypto.openssh_keypair:
@@ -37,3 +42,16 @@
 
     - name: Setup ssh-keys
       ansible.builtin.import_tasks: tasks/ssh-keys.yml
+
+    - name: Install MPI
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - build-essential
+        - openmpi-bin
+        - openmpi-common
+        - openmpi-doc
+        - libopenmpi-dev
+        - gcc
+        - htop
