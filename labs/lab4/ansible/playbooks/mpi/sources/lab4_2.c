@@ -17,9 +17,10 @@ int main(int argc, char **argv)
         str = malloc(1 * sizeof(char));
         for (; (c = getchar()) != '\n' && c != EOF; len++)
         {
-            str = realloc(str, sizeof(char) * len + 1);
+            str = realloc(str, sizeof(char) * (len + 1));
             str[len] = c;
         }
+        len++;
         str = realloc(str, sizeof(char) * len);
         str[len] = '\0';
 
