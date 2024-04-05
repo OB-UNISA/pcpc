@@ -4,4 +4,5 @@ sources:
   - "lab4_1.c"
   - "lab4_2.c"
   - "lab4_3_broadcast.c"
+  - "lab4_3_gather.c"
 
