@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <mpi.h>
 
-#define N 10
-
 int main(int argc, char **argv)
 {
     int rank, P, msg_integer = 0;
