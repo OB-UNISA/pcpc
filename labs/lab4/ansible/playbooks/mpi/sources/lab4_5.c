@@ -13,11 +13,12 @@ int main(int argc, char **argv)
     int char_type = argc >= 4 ? atoi(argv[3]) : 0; // if a 4th arg is passed, char will be used
     MPI_Datatype DATA_TYPE = char_type ? MPI_CHAR : MPI_INT;
 
-    char array_char[N];
-    int array_int[N];
+    char *array_char = NULL;
+    int *array_int = NULL;
 
     if (char_type)
     {
+        array_char = malloc(N * sizeof(char));
         for (int i = 0; i < N; i++)
         {
             array_char[i] = i;
@@ -25,6 +26,7 @@ int main(int argc, char **argv)
     }
     else
     {
+        array_int = malloc(N * sizeof(int));
         for (int i = 0; i < N; i++)
         {
             array_int[i] = i;
@@ -63,7 +65,6 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
     end = MPI_Wtime();
 
-    // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (rank == 0)
     {
         printf("OP: %s, N: %d, P: %d, Type: %s\nTime in ms = %f\n", op_str, N, P, char_type ? "char" : "int", end - start);
