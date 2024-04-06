@@ -6,3 +6,11 @@ sources:
   - "lab4_3_broadcast.c"
   - "lab4_3_gather.c"
   - "lab4_3_scatter.c"
+
+ignore_run:
+  - lab4_2.c
+
+N: 30
+P: 4
+OP: s
+Char: 0
