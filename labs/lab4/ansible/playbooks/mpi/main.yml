@@ -27,6 +27,7 @@
       ansible.builtin.command:
         cmd: 'mpicc "/home/{{ user }}/{{ item }}" -o "/home/{{ user }}/{{ item }}.out"'
       loop: "{{ sources }}"
+      when: 'item not in ignore_compile'
 
     - name: Copy host file on master
       ansible.builtin.copy:
@@ -50,9 +51,9 @@
       ansible.builtin.debug:
         msg: "{{ item.stdout_lines }}"
       loop: "{{ mpi_output.results }}"
+      when: 'item.item not in ignore_run'
       loop_control:
         label: "{{ item.item }}"
-      when: 'item not in ignore_run'
       run_once: true
 
     - name: Run MPI lab4_2 on master
@@ -72,7 +73,7 @@
     - name: Compile MPI sources into objects for lab4_5
       become_user: "{{ user }}"
       ansible.builtin.command:
-        cmd: 'mpicc -c "/home/{{ user }}/{{ item }}"'
+        cmd: 'mpicc -c "/home/{{ user }}/{{ item }}" -o "/home/{{ user }}/{{ item }}.o"'
       loop:
         - lab4_4_mycollective.c
         - lab4_5.c
@@ -80,12 +81,12 @@
     - name: Link MPI sources into objects for lab4_5
       become_user: "{{ user }}"
       ansible.builtin.command:
-        cmd: 'mpicc -o lab4_5.c.out "/home/{{ user }}/lab4_5.o" "/home/{{ user }}/lab4_4_mycollective.o"'
+        cmd: 'mpicc -o "/home/{{ user }}/lab4_5.c.out" "/home/{{ user }}/lab4_5.c.o" "/home/{{ user }}/lab4_4_mycollective.c.o"'
 
     - name: Run MPI lab4_5 on master
       become_user: "{{ user }}"
       ansible.builtin.command:
-        cmd: 'mpirun -np {{ P }} --oversubscribe --hostfile "/home/{{ user }}/hfile" "/home/{{ user }}/lab4_5.c.out"'
+        cmd: 'mpirun -np {{ P }} --oversubscribe --hostfile "/home/{{ user }}/hfile" "/home/{{ user }}/lab4_5.c.out" {{ OP }} {{ N }} {{ Char }}'
       register: mpi_output_lab4_5
       run_once: true
 

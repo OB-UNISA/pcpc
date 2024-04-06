@@ -46,6 +46,3 @@ terraform.rc
 # Ignore compiled files
 **/*.out
 **/*.o
-
-# Ignore hosts.ini to avoid committing IPs. Temp remove this entry when the file need to be changed
-**/hosts.ini

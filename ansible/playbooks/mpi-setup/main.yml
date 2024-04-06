@@ -12,11 +12,6 @@
         - 'vars/servers-{{ ansible_os_family }}.yml'
         - vars/servers-default.yml
 
-    - name: Apt update cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 86400 # 24h
-
   tasks:
     - name: 'Generate keys'
       community.crypto.openssh_keypair:
@@ -35,6 +30,11 @@
       with_first_found:
         - 'vars/servers-{{ ansible_os_family }}.yml'
         - vars/servers-default.yml
+
+    - name: Apt update cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 86400 # 24h
 
   tasks:
     - name: Setup user

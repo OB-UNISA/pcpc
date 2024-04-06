@@ -12,16 +12,3 @@
     group: pcpc
     groups:
       - sudo
-
-- name: Ensure SSH password authentication is enabled
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: '^PasswordAuthentication no'
-    state: absent
-  register: sshd_config
-
-- name: Restart ssh service
-  ansible.builtin.service:
-    name: ssh
-    state: restarted
-  when: sshd_config is changed
