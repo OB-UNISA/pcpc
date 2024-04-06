@@ -4,7 +4,7 @@ module "compute-instance" {
   credentials = var.credentials
   project-id  = var.project-id
 
-  name             = "pcpc-lab3"
+  name             = "pcpc-lab4"
   ssh-user         = "root"
   ssh-pk-save-path = var.ssh-pk-save-path
   machines-count   = 2

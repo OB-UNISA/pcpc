@@ -1,13 +1,10 @@
-module "compute-instance" {
-  source = "../../../../terraform/gcp"
+module "azure-vm" {
+  source = "../../../../terraform/azure"
 
-  credentials = var.credentials
-  project-id  = var.project-id
-
-  name             = "pcpc-lab3"
-  ssh-user         = "root"
+  name             = "pcpc-lab4"
+  ssh-user         = "azureuser"
   ssh-pk-save-path = var.ssh-pk-save-path
-  machines-count   = 2
+  machines-count   = 3
   cloud-init-file  = "cloud-init.yaml"
   # run "cloud-init status --wait" in the SSH to check when it is done
   # run "tail -f /var/log/cloud-init-output.log" to see what it is doing

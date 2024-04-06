@@ -1,11 +1,8 @@
-module "compute-instance" {
-  source = "../../../../terraform/gcp"
+module "hetzner-server" {
+  source = "../../../../terraform/hetzner"
 
-  credentials = var.credentials
-  project-id  = var.project-id
-
-  name             = "pcpc-lab3"
-  ssh-user         = "root"
+  hcloud_token     = var.hcloud_token
+  name             = "pcpc-lab4"
   ssh-pk-save-path = var.ssh-pk-save-path
   machines-count   = 2
   cloud-init-file  = "cloud-init.yaml"
