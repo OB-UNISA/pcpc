@@ -1,0 +1,12 @@
+user: pcpc
+
+sources:
+  - "lab5_1.c"
+
+ignore_run:
+  - "ignore"
+
+ignore_compile:
+  - "ignore"
+
+P: 4
