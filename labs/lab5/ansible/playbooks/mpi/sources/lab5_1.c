@@ -22,6 +22,8 @@ int mod(int a, int b)
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
+    MPI_Request request = MPI_REQUEST_NULL;
+    MPI_Status status;
 
     int rank, P;
     int v = 0;
@@ -41,27 +43,28 @@ int main(int argc, char **argv)
         for (int i = 0; i < ITERATIONS; i++)
         {
             v = v <= S ? v + num : v;
-            MPI_Send(&v, 1, MPI_INT, next_rank, next_rank, MPI_COMM_WORLD);
+            MPI_Isend(&v, 1, MPI_INT, next_rank, next_rank, MPI_COMM_WORLD, &request);
 
             if (v > S && i > 0)
             {
                 iteractions = i + 1;
                 break;
             }
-
             printf("[r:%d s:%d]Rank: %d, num: %d, v: %d\n", prev_rank, next_rank, rank, num, v);
-            MPI_Recv(&v, 1, MPI_INT, prev_rank, rank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Irecv(&v, 1, MPI_INT, prev_rank, rank, MPI_COMM_WORLD, &request);
+            MPI_Wait(&request, &status);
         }
     }
     else
     {
         for (int i = 0; i < ITERATIONS && v <= S; i++)
         {
-            MPI_Recv(&v, 1, MPI_INT, prev_rank, rank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Irecv(&v, 1, MPI_INT, prev_rank, rank, MPI_COMM_WORLD, &request);
+            MPI_Wait(&request, &status);
 
             v = v <= S ? v + num : v;
             printf("[r:%d s:%d]Rank: %d, num: %d, v: %d\n", prev_rank, next_rank, rank, num, v);
-            MPI_Send(&v, 1, MPI_INT, next_rank, next_rank, MPI_COMM_WORLD);
+            MPI_Isend(&v, 1, MPI_INT, next_rank, next_rank, MPI_COMM_WORLD, &request);
         }
     }
 
