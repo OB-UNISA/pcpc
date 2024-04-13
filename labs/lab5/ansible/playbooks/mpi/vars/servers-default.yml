@@ -1,0 +1,24 @@
+user: pcpc
+
+sources:
+  - "lab5_1.c"
+  - "lab5_2.c"
+  - "lab5_3.c"
+  - "lab5_4.c"
+
+ignore_run:
+  - "lab5_2.c"
+  - "lab5_3.c"
+  - "lab5_4.c"
+
+ignore_compile:
+  - "lab5_2.c"
+  - "lab5_3.c"
+  - "lab5_4.c"
+
+benchs:
+  - "lab5_4.c"
+
+P: 3
+N: 100
+N_Bench: 1000000

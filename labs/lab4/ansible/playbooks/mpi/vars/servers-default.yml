@@ -6,19 +6,13 @@ sources:
   - "lab4_3_broadcast.c"
   - "lab4_3_gather.c"
   - "lab4_3_scatter.c"
-  - "lab4_4_mycollective.c"
-  - "lab4_4_mycollective.h"
   - "lab4_5.c"
 
 ignore_run:
   - "lab4_2.c"
-  - "lab4_4_mycollective.c"
-  - "lab4_4_mycollective.h"
   - "lab4_5.c"
 
 ignore_compile:
-  - "lab4_4_mycollective.c"
-  - "lab4_4_mycollective.h"
   - "lab4_5.c"
 
 P: 4

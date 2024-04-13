@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-#include "lab4_4_mycollective.h"
+#include "mycollective.h"
 
 int main(int argc, char **argv)
 {

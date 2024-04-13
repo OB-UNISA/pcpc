@@ -1,4 +1,4 @@
-- name: "Lab4"
+- name: "Lab5"
   hosts: all
 
   become: true
@@ -56,20 +56,6 @@
         label: "{{ item.item }}"
       run_once: true
 
-    - name: Run MPI lab4_2 on master
-      become_user: "{{ user }}"
-      ansible.builtin.command:
-        cmd: 'mpirun -np {{ P }} --oversubscribe --hostfile "/home/{{ user }}/hfile" "/home/{{ user }}/lab4_2.c.out"'
-        stdin: "hello"
-        stdin_add_newline: true
-      register: mpi_output_lab4_2
-      run_once: true
-
-    - name: Print lab4_2 output
-      ansible.builtin.debug:
-        msg: "{{ mpi_output_lab4_2.stdout_lines }}"
-      run_once: true
-
     - name: Copy MPI mycollective
       ansible.builtin.copy:
         src: "../../../../mycollective/{{ item }}"
@@ -81,27 +67,40 @@
         - "mycollective.c"
         - "mycollective.h"
 
-    - name: Compile MPI sources into objects for lab4_5
+    - name: Compile MPI sources into objects for labs with mycollective
       become_user: "{{ user }}"
       ansible.builtin.command:
         cmd: 'mpicc -c "/home/{{ user }}/{{ item }}" -o "/home/{{ user }}/{{ item }}.o"'
       loop:
         - mycollective.c
-        - lab4_5.c
+        - lab5_2.c
+        - lab5_3.c
+        - lab5_4.c
 
-    - name: Link MPI sources into objects for lab4_5
+    - name: Link MPI sources into objects for labs with mycollective
       become_user: "{{ user }}"
       ansible.builtin.command:
-        cmd: 'mpicc -o "/home/{{ user }}/lab4_5.c.out" "/home/{{ user }}/lab4_5.c.o" "/home/{{ user }}/mycollective.c.o"'
+        cmd: 'mpicc -o "/home/{{ user }}/{{ item }}.out" "/home/{{ user }}/{{ item }}.o" "/home/{{ user }}/mycollective.c.o"'
+      loop:
+        - lab5_2.c
+        - lab5_3.c
+        - lab5_4.c
 
-    - name: Run MPI lab4_5 on master
+    - name: Run MPI labs with mycollective on master
       become_user: "{{ user }}"
       ansible.builtin.command:
-        cmd: 'mpirun -np {{ P }} --oversubscribe --hostfile "/home/{{ user }}/hfile" "/home/{{ user }}/lab4_5.c.out" {{ OP }} {{ N }} {{ Char }}'
-      register: mpi_output_lab4_5
+        cmd: 'mpirun -np {{ P }} --oversubscribe --hostfile "/home/{{ user }}/hfile" "/home/{{ user }}/{{ item }}.out" {{ N if item not in benchs else N_Bench }}'
+      register: mpi_output_labs_mycollective
       run_once: true
+      loop:
+        - lab5_2.c
+        - lab5_3.c
+        - lab5_4.c
 
-    - name: Print lab4_5 output
+    - name: Print labs with mycollective output
       ansible.builtin.debug:
-        msg: "{{ mpi_output_lab4_5.stdout_lines }}"
+        msg: "{{ item.stdout_lines }}"
+      loop: "{{ mpi_output_labs_mycollective.results }}"
+      loop_control:
+        label: "{{ item.item }}"
       run_once: true

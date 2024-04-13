@@ -1,5 +1,5 @@
 ---
-- name: 'Generate ssh keys on localhost'
+- name: "Generate ssh keys on localhost"
   hosts: localhost
 
   gather_facts: true
@@ -7,17 +7,17 @@
 
   pre_tasks:
     - name: Load variables file
-      ansible.builtin.include_vars: '{{ item }}'
+      ansible.builtin.include_vars: "{{ item }}"
       with_first_found:
-        - 'vars/servers-{{ ansible_os_family }}.yml'
+        - "vars/servers-{{ ansible_os_family }}.yml"
         - vars/servers-default.yml
 
   tasks:
-    - name: 'Generate keys'
+    - name: "Generate keys"
       community.crypto.openssh_keypair:
-        path: '{{ local_ssh_dir }}/{{ user }}'
+        path: "{{ local_ssh_dir }}/{{ user }}"
 
-- name: 'Add user and ssh keys'
+- name: "Add user and ssh keys"
   hosts: all
 
   become: true
@@ -26,9 +26,9 @@
 
   pre_tasks:
     - name: Load variables file
-      ansible.builtin.include_vars: '{{ item }}'
+      ansible.builtin.include_vars: "{{ item }}"
       with_first_found:
-        - 'vars/servers-{{ ansible_os_family }}.yml'
+        - "vars/servers-{{ ansible_os_family }}.yml"
         - vars/servers-default.yml
 
     - name: Apt update cache
