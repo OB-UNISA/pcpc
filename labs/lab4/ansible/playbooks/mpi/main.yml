@@ -70,18 +70,29 @@
         msg: "{{ mpi_output_lab4_2.stdout_lines }}"
       run_once: true
 
+    - name: Copy MPI mycollective
+      ansible.builtin.copy:
+        src: "../../../../mycollective/{{ item }}"
+        dest: '/home/{{ user }}/{{ item }}'
+        owner: '{{ user }}'
+        group: '{{ user }}'
+        mode: '0777'
+      loop: 
+        - "mycollective.c"
+        - "mycollective.h"
+
     - name: Compile MPI sources into objects for lab4_5
       become_user: "{{ user }}"
       ansible.builtin.command:
         cmd: 'mpicc -c "/home/{{ user }}/{{ item }}" -o "/home/{{ user }}/{{ item }}.o"'
       loop:
-        - lab4_4_mycollective.c
+        - mycollective.c
         - lab4_5.c
 
     - name: Link MPI sources into objects for lab4_5
       become_user: "{{ user }}"
       ansible.builtin.command:
-        cmd: 'mpicc -o "/home/{{ user }}/lab4_5.c.out" "/home/{{ user }}/lab4_5.c.o" "/home/{{ user }}/lab4_4_mycollective.c.o"'
+        cmd: 'mpicc -o "/home/{{ user }}/lab4_5.c.out" "/home/{{ user }}/lab4_5.c.o" "/home/{{ user }}/mycollective.c.o"'
 
     - name: Run MPI lab4_5 on master
       become_user: "{{ user }}"

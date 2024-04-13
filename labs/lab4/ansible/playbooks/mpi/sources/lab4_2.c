@@ -20,7 +20,6 @@ int main(int argc, char **argv)
             str = realloc(str, sizeof(char) * (len + 1));
             str[len] = c;
         }
-        len++;
         str = realloc(str, sizeof(char) * len);
         str[len] = '\0';
 

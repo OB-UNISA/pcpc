@@ -1,4 +1,4 @@
-#include "lab4_4_mycollective.h"
+#include "mycollective.h"
 #include <stdio.h>
 #include <mpi.h>
 
