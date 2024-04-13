@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
     int rank, P;
     int v = 0;
-    int iteractions = 0;
+    int iterations = 0;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &P);
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 
             if (v > S && i > 0)
             {
-                iteractions = i + 1;
+                iterations = i + 1;
                 break;
             }
             printf("[r:%d s:%d]Rank: %d, num: %d, v: %d\n", prev_rank, next_rank, rank, num, v);
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0)
     {
-        printf("S: %d, v: %d, i: %d\n", S, v, iteractions);
+        printf("S: %d, v: %d, i: %d\n", S, v, iterations);
     }
 
     MPI_Finalize();

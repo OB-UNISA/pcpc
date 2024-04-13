@@ -7,19 +7,19 @@
 
   pre_tasks:
     - name: Load variables file
-      ansible.builtin.include_vars: '{{ item }}'
+      ansible.builtin.include_vars: "{{ item }}"
       with_first_found:
-        - 'vars/servers-{{ ansible_os_family }}.yml'
+        - "vars/servers-{{ ansible_os_family }}.yml"
         - vars/servers-default.yml
 
   tasks:
     - name: Copy MPI sources
       ansible.builtin.copy:
         src: "./sources/{{ item }}"
-        dest: '/home/{{ user }}/{{ item }}'
-        owner: '{{ user }}'
-        group: '{{ user }}'
-        mode: '0777'
+        dest: "/home/{{ user }}/{{ item }}"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: "0777"
       loop: "{{ sources }}"
 
     - name: Compile MPI sources
@@ -27,15 +27,15 @@
       ansible.builtin.command:
         cmd: 'mpicc "/home/{{ user }}/{{ item }}" -o "/home/{{ user }}/{{ item }}.out"'
       loop: "{{ sources }}"
-      when: 'item not in ignore_compile'
+      when: "item not in ignore_compile"
 
     - name: Copy host file on master
       ansible.builtin.copy:
-        src: './hfile'
-        dest: '/home/{{ user }}/hfile'
-        owner: '{{ user }}'
-        group: '{{ user }}'
-        mode: '0777'
+        src: "./hfile"
+        dest: "/home/{{ user }}/hfile"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: "0777"
       run_once: true
 
     - name: Run MPI sources on master
@@ -43,7 +43,7 @@
       ansible.builtin.command:
         cmd: 'mpirun -np {{ P }} --oversubscribe --hostfile "/home/{{ user }}/hfile" "/home/{{ user }}/{{ item }}.out"'
       loop: "{{ sources }}"
-      when: 'item not in ignore_run'
+      when: "item not in ignore_run"
       register: mpi_output
       run_once: true
 
@@ -51,7 +51,7 @@
       ansible.builtin.debug:
         msg: "{{ item.stdout_lines }}"
       loop: "{{ mpi_output.results }}"
-      when: 'item.item not in ignore_run'
+      when: "item.item not in ignore_run"
       loop_control:
         label: "{{ item.item }}"
       run_once: true
@@ -73,11 +73,11 @@
     - name: Copy MPI mycollective
       ansible.builtin.copy:
         src: "../../../../mycollective/{{ item }}"
-        dest: '/home/{{ user }}/{{ item }}'
-        owner: '{{ user }}'
-        group: '{{ user }}'
-        mode: '0777'
-      loop: 
+        dest: "/home/{{ user }}/{{ item }}"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: "0777"
+      loop:
         - "mycollective.c"
         - "mycollective.h"
 

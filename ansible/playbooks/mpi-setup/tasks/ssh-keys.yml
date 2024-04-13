@@ -1,31 +1,31 @@
 - name: Add pub key to authorized key
   ansible.posix.authorized_key:
-    user: '{{ user }}'
+    user: "{{ user }}"
     state: present
-    key: '{{ item }}'
+    key: "{{ item }}"
   with_file:
-    - '{{ local_ssh_dir }}/{{ user }}.pub'
+    - "{{ local_ssh_dir }}/{{ user }}.pub"
 
 - name: Copy ssh pbk
   ansible.builtin.copy:
-    src: '{{ local_ssh_dir }}/{{ user }}.pub'
-    dest: '/home/{{ user }}/.ssh/id_rsa.pub'
-    owner: '{{ user }}'
-    group: '{{ user }}'
-    mode: '0600'
+    src: "{{ local_ssh_dir }}/{{ user }}.pub"
+    dest: "/home/{{ user }}/.ssh/id_rsa.pub"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: "0600"
 
 - name: Copy ssh pk
   ansible.builtin.copy:
-    src: '{{ local_ssh_dir }}/{{ user }}'
-    dest: '/home/{{ user }}/.ssh/id_rsa'
-    owner: '{{ user }}'
-    group: '{{ user }}'
-    mode: '0600'
+    src: "{{ local_ssh_dir }}/{{ user }}"
+    dest: "/home/{{ user }}/.ssh/id_rsa"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: "0600"
 
 - name: Copy .ssh config
   ansible.builtin.copy:
-    src: './config'
-    dest: '/home/{{ user }}/.ssh/config'
-    owner: '{{ user }}'
-    group: '{{ user }}'
-    mode: '0600'
+    src: "./config"
+    dest: "/home/{{ user }}/.ssh/config"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: "0600"
