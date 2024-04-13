@@ -23,17 +23,18 @@ int main(int argc, char **argv)
         str = realloc(str, sizeof(char) * len);
         str[len] = '\0';
 
-        MPI_Send(&len, 1, MPI_INT, 1, 1, MPI_COMM_WORLD);
         MPI_Send(str, len, MPI_CHAR, 1, 1, MPI_COMM_WORLD);
         printf("Rank: %d, Message Sent: %s\n", rank, str);
     }
 
     else if (rank == 1)
     {
-        MPI_Recv(&len, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Status status;
+        MPI_Probe(0, 1, MPI_COMM_WORLD, &status);
+        MPI_Get_count(&status, MPI_CHAR, &len);
         printf("Rank: %d, Message Len: %d\n", rank, len);
         str = malloc(len * sizeof(char));
-    
+
         MPI_Recv(str, len, MPI_CHAR, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         printf("Rank: %d, Message Received: %s\n", rank, str);
     }
