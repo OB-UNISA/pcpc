@@ -3,12 +3,15 @@ user: pcpc
 sources:
   - "lab5_1.c"
   - "lab5_2.c"
+  - "lab5_3.c"
 
 ignore_run:
   - "lab5_2.c"
+  - "lab5_3.c"
 
 ignore_compile:
   - "lab5_2.c"
+  - "lab5_3.c"
 
 P: 4
 N: 100

@@ -72,3 +72,69 @@ int scatter(int P, int rank, void *buf, int count, MPI_Datatype data_type, MPI_C
         return count;
     }
 }
+
+int min(int P, int rank, int *array, int count, MPI_Comm comm)
+{
+    count = scatter(P, rank, array, count, MPI_INT, MPI_COMM_WORLD);
+    int min = array[0];
+
+    if (rank == 0)
+    {
+        int l_min;
+        for (int i = 1; i < P; i++)
+        {
+            MPI_Recv(&l_min, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            if (l_min < min)
+            {
+                min = l_min;
+            }
+        }
+    }
+    else
+    {
+        for (int i = 1; i < count; i++)
+        {
+            if (array[i] < min)
+            {
+                min = array[i];
+            }
+        }
+
+        MPI_Send(&min, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    }
+
+    return min;
+}
+
+int max(int P, int rank, int *array, int count, MPI_Comm comm)
+{
+    count = scatter(P, rank, array, count, MPI_INT, MPI_COMM_WORLD);
+    int max = array[0];
+
+    if (rank == 0)
+    {
+        int l_max;
+        for (int i = 1; i < P; i++)
+        {
+            MPI_Recv(&l_max, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            if (l_max > max)
+            {
+                max = l_max;
+            }
+        }
+    }
+    else
+    {
+        for (int i = 1; i < count; i++)
+        {
+            if (array[i] > max)
+            {
+                max = array[i];
+            }
+        }
+
+        MPI_Send(&max, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    }
+
+    return max;
+}
