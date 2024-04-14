@@ -1,0 +1,13 @@
+user: pcpc
+
+sources:
+  - "lab6_1.c"
+  - "lab6_2.c"
+
+ignore_run:
+  - "ignore"
+
+ignore_compile:
+  - "ignore"
+
+P: 3
