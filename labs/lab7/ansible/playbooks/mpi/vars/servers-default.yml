@@ -1,0 +1,15 @@
+user: pcpc
+
+sources:
+  - "lab7_1.c"
+  - "lab7_2.c"
+  - "lab7_3.c"
+
+ignore_run:
+  - "ignore"
+
+ignore_compile:
+  - "ignore"
+
+P: 4
+N: 30
